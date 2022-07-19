@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/Map-Marker-App/static/css/main.1665e49e.css",
-    "main.js": "/Map-Marker-App/static/js/main.90dc5b6c.js",
+    "main.css": "/Map-Marker-App/static/css/main.4445f47b.css",
+    "main.js": "/Map-Marker-App/static/js/main.5b8ec004.js",
     "index.html": "/Map-Marker-App/index.html",
-    "main.1665e49e.css.map": "/Map-Marker-App/static/css/main.1665e49e.css.map",
-    "main.90dc5b6c.js.map": "/Map-Marker-App/static/js/main.90dc5b6c.js.map"
+    "main.4445f47b.css.map": "/Map-Marker-App/static/css/main.4445f47b.css.map",
+    "main.5b8ec004.js.map": "/Map-Marker-App/static/js/main.5b8ec004.js.map"
   },
   "entrypoints": [
-    "static/css/main.1665e49e.css",
-    "static/js/main.90dc5b6c.js"
+    "static/css/main.4445f47b.css",
+    "static/js/main.5b8ec004.js"
   ]
 }
