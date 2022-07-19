@@ -22,7 +22,6 @@ function App() {
 
   //Click to add. When the user clicks on the map, add a marker for the latitude & longitude where clicked.
   const handleAddMarkerOnClick = (e: any) => {
-    console.log(e.latLng.lat(), e.latLng.lng())
     var newMarker = new MarkerModel({ lat: e.latLng.lat(), lng: e.latLng.lng() }, "red")
     setMarkers(markers => [...markers, newMarker]);
   }
