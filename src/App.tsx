@@ -10,8 +10,8 @@ const containerStyle = {
 };
 
 const center = {
-  lat: -3.745,
-  lng: -38.523
+  lat: 45,
+  lng: 15
 };
 
 function App() {
@@ -20,11 +20,30 @@ function App() {
   const [text, setText] = useState<string>("")
   const [errors, setErrors] = useState<string[]>([])
 
+  //Click to add. When the user clicks on the map, add a marker for the latitude & longitude where clicked.
   const handleAddMarkerOnClick = (e: any) => {
+    console.log(e.latLng.lat(), e.latLng.lng())
     var newMarker = new MarkerModel({ lat: e.latLng.lat(), lng: e.latLng.lng() }, "red")
     setMarkers(markers => [...markers, newMarker]);
   }
 
+  /*Batch add. For batch add, the user inputs a multiline text. Each line of text represents a separate marker. Each marker is given as latitude and longitude, separated by comma.
+  const handleAddMarkerFromString = () => {
+    var lines = text.split(/\r?\n/);
+    lines.forEach((line, index) => {
+      var parts = line.split(",")
+      if (!isNaN(Number(parts[0])) && Number(parts[0]) > -90 && Number(parts[0]) < 90 && !isNaN(Number(parts[1])) && Number(parts[1]) > -180 && Number(parts[1]) < 180) {
+        var newMarker = new MarkerModel({ lat: Number(parts[0]), lng: Number(parts[1]) }, colors[0])
+        setMarkers(markers => [...markers, newMarker])
+      }
+      else {
+        setErrors(errors => [...errors, "Line " + (index + 1).toString() + ": " + line]);
+        setTimeout(() => setErrors([]), 3000)
+      }
+    })
+  }*/
+
+  //Click to change color. Click on an existing marker should change its color (for example, use predefined colors and cycle through).
   const colors = ["red", "green", "blue", "orange", "black", "yellow", "pink"]
 
   const handleChangeColor = (markerIndex: number, color: string) => {
@@ -42,12 +61,13 @@ function App() {
     setMarkers(newArray);
   }
 
+  //Support color for batch add. For batch add, if there is a third component on the line, it should be treated as color.
   const handleAddMarkerFromString = () => {
     var lines = text.split(/\r?\n/);
     lines.forEach((line, index) => {
       var parts = line.split(",")
-      if (!isNaN(Number(parts[0])) && !isNaN(Number(parts[1]))) {
-        var newMarker = new MarkerModel({ lat: Number(parts[0]), lng: Number(parts[1]) }, colors.indexOf(parts[2], 0) !== -1 ? parts[2] : "red")
+      if (!isNaN(Number(parts[0])) && Number(parts[0]) > -90 && Number(parts[0]) < 90 && !isNaN(Number(parts[1])) && Number(parts[1]) > -180 && Number(parts[1]) < 180) {
+        var newMarker = new MarkerModel({ lat: Number(parts[0]), lng: Number(parts[1]) }, colors.indexOf(parts[2], 0) !== -1 ? parts[2] : colors[0])
         setMarkers(markers => [...markers, newMarker])
       }
       else {
@@ -57,6 +77,7 @@ function App() {
     })
   }
 
+  //Right click to delete. When right clicked on an existing marker, delete it.
   const handleDeleteMarker = (markerIndex: number) => {
     var newArray: MarkerModel[] = []
     markers.forEach((marker, index) => {
@@ -65,21 +86,23 @@ function App() {
       }
     })
     if(markers.length === 1)
-      localStorage.setItem('markers', JSON.stringify([]));
+      localStorage.removeItem('markers');
     setMarkers(newArray);
   }
 
+  // Save locally. Save data to local storage
+  useEffect(() => {
+    if (markers.length !== 0)
+      localStorage.setItem('markers', JSON.stringify(markers));
+  }, [markers]);
+
+  //. If the user visits the app again, read data from local storage. Try to restore both markers and the current viewport.
   const handleGetLocalStorage = () => {
     const storedMarkers = JSON.parse(localStorage.getItem('markers') || "[]");
     if (storedMarkers) {
       setMarkers(storedMarkers);
     }
   }
-
-  useEffect(() => {
-    if (markers.length !== 0)
-      localStorage.setItem('markers', JSON.stringify(markers));
-  }, [markers]);
 
   return (
     <div className="App">
@@ -88,7 +111,7 @@ function App() {
           onTilesLoaded={handleGetLocalStorage}
           mapContainerStyle={containerStyle}
           center={center}
-          zoom={10}
+          zoom={5}
           onClick={(e) => { handleAddMarkerOnClick(e) }}
         >
           {markers.length > 0 && <Markers markers={markers} handleChangeColor={handleChangeColor} handleDeleteMarker={handleDeleteMarker} />}
@@ -96,7 +119,7 @@ function App() {
       </LoadScript>
       <div className="add-markers-container">
         <b>Add markers</b>
-        <textarea value={text} onChange={(event) => { setText(event.target.value) }} />
+        <textarea value={text} onChange={(event) => { setText(event.target.value) }} placeholder={"latitude,longitude,color(optional)"} />
         <button disabled={text === ""} onClick={handleAddMarkerFromString}>Add</button>
         {
           errors.length > 0 &&
