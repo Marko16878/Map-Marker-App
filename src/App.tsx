@@ -4,6 +4,8 @@ import { MarkerModel } from './models/MarkerModel';
 import './App.css';
 import Markers from './components/Markers/Markers';
 
+const colors = ["red", "green", "blue", "orange", "black", "yellow", "pink"]
+
 const containerStyle = {
   width: '100%',
   height: '100%'
@@ -22,7 +24,7 @@ function App() {
 
   //Click to add. When the user clicks on the map, add a marker for the latitude & longitude where clicked.
   const handleAddMarkerOnClick = (e: any) => {
-    var newMarker = new MarkerModel({ lat: e.latLng.lat(), lng: e.latLng.lng() }, "red")
+    var newMarker = new MarkerModel({ lat: e.latLng.lat(), lng: e.latLng.lng() }, colors[0])
     setMarkers(markers => [...markers, newMarker]);
   }
 
@@ -43,14 +45,12 @@ function App() {
   }*/
 
   //Click to change color. Click on an existing marker should change its color (for example, use predefined colors and cycle through).
-  const colors = ["red", "green", "blue", "orange", "black", "yellow", "pink"]
-
   const handleChangeColor = (markerIndex: number, color: string) => {
     var newArray: MarkerModel[] = []
     markers.forEach((marker, index) => {
       if (index === markerIndex) {
         var colorIndex = colors.indexOf(marker.color, 0)
-        var newMarker = new MarkerModel(marker.position, colors[colorIndex + 1])
+        var newMarker = new MarkerModel(marker.position, colors[colorIndex === colors.length - 1 ? 0 : colorIndex + 1])
         newArray.push(newMarker)
       }
       else {
@@ -84,7 +84,7 @@ function App() {
         newArray.push(marker)
       }
     })
-    if(markers.length === 1)
+    if (markers.length === 1)
       localStorage.removeItem('markers');
     setMarkers(newArray);
   }
