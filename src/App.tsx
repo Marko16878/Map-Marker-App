@@ -11,16 +11,15 @@ const containerStyle = {
   height: '100%'
 };
 
-const center = {
-  lat: 45,
-  lng: 15
-};
-
 function App() {
 
   const [markers, setMarkers] = useState<MarkerModel[]>([])
   const [text, setText] = useState<string>("")
   const [errors, setErrors] = useState<string[]>([])
+  const [endTime, setEndTime] = useState<number>(0)
+  const [timer, setTimer] = useState<number>(0)
+  const [center, setCenter] = useState<{ lat: number, lng: number }>()
+  const [zoom, setZoom] = useState<number>()
 
   //Click to add. When the user clicks on the map, add a marker for the latitude & longitude where clicked.
   const handleAddMarkerOnClick = (e: any) => {
@@ -62,6 +61,8 @@ function App() {
 
   //Support color for batch add. For batch add, if there is a third component on the line, it should be treated as color.
   const handleAddMarkerFromString = () => {
+    setErrors([])
+    setEndTime(Number(timer) + 3)
     var lines = text.split(/\r?\n/);
     lines.forEach((line, index) => {
       var parts = line.split(",")
@@ -71,7 +72,6 @@ function App() {
       }
       else {
         setErrors(errors => [...errors, "Line " + (index + 1).toString() + ": " + line]);
-        setTimeout(() => setErrors([]), 3000)
       }
     })
   }
@@ -103,19 +103,75 @@ function App() {
     }
   }
 
+  //timer to display message about wrong input
+  useEffect(() => {
+    if (timer < endTime)
+      setTimeout(() => { setTimer(Number(timer) + 1) }, 1000)
+    if (timer === endTime) {
+      setTimer(0)
+      setEndTime(0)
+      setErrors([])
+    }
+  }, [timer, endTime])
+
+  //determining the position of the center of the map, the location that is placed 
+  //in the local storage has the highest priority, if the location is not entered in 
+  //the local storage (the application is launched for the first time), then the center 
+  //of the map is determined using geolocation, it is necessary to allow the application 
+  //to access the geolocation of the device and if the user does not allow access 
+  //map center will be in coordinates (0,0)
+  useEffect(() => {
+    if (center === undefined) {
+      var centerIsSet = false
+      var storedLocation = JSON.parse(localStorage.getItem('mapCenter') || "[]")
+      if (storedLocation?.lat && storedLocation?.lng && storedLocation.zoom) {
+        setCenter({ lat: storedLocation.lat, lng: storedLocation.lng })
+        setZoom(storedLocation.zoom)
+        centerIsSet = true
+      }
+      else {
+        navigator?.geolocation.getCurrentPosition(
+          ({ coords: { latitude: lat, longitude: lng } }) => {
+            setCenter({ lat: lat, lng: lng })
+            setZoom(10)
+            centerIsSet = true
+          }
+        )
+      }
+      if (!centerIsSet) {
+        setCenter({ lat: 0, lng: 0 })
+        setZoom(2)
+      }
+    }
+  }, [center])
+
+  //function to write the current location to local storage every time the map is moved
+  const onMapLoad = (map: any) => {
+    google.maps.event.addListener(map, "bounds_changed", () => {
+      var lat = map.getCenter().lat()
+      var lng = map.getCenter().lng()
+      var zoom = map.getZoom()
+      localStorage.setItem('mapCenter', JSON.stringify({ lat: lat, lng: lng, zoom: zoom }));
+    });
+  };
+
   return (
     <div className="App">
-      <LoadScript googleMapsApiKey="AIzaSyBTgU1Rpxkp7GbjcgAaYAvTHFDEagwN9hA">
-        <GoogleMap
-          onTilesLoaded={handleGetLocalStorage}
-          mapContainerStyle={containerStyle}
-          center={center}
-          zoom={5}
-          onClick={(e) => { handleAddMarkerOnClick(e) }}
-        >
-          {markers.length > 0 && <Markers markers={markers} handleChangeColor={handleChangeColor} handleDeleteMarker={handleDeleteMarker} />}
-        </GoogleMap>
-      </LoadScript>
+      {center && zoom &&
+        <LoadScript googleMapsApiKey="AIzaSyBTgU1Rpxkp7GbjcgAaYAvTHFDEagwN9hA">
+          <GoogleMap
+            onTilesLoaded={handleGetLocalStorage}
+            mapContainerStyle={containerStyle}
+            center={center}
+            zoom={zoom}
+            onClick={(e) => { handleAddMarkerOnClick(e) }}
+            onLoad={map => onMapLoad(map)}
+          >
+            {markers.length > 0 && <Markers markers={markers} handleChangeColor={handleChangeColor} handleDeleteMarker={handleDeleteMarker} />}
+          </GoogleMap>
+        </LoadScript>
+      }
+
       <div className="add-markers-container">
         <b>Add markers</b>
         <textarea value={text} onChange={(event) => { setText(event.target.value) }} placeholder={"latitude,longitude,color(optional)"} />
